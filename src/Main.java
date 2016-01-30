@@ -204,7 +204,7 @@ public class Main extends Application{
 	 
 	public void drawTrace(SpaceObject so) {
 		pixelLine = new Line(so.getCenterX(), so.getCenterY(), so.getCenterX(), so.getCenterY());
-		pixelLine.setStroke(Color.WHITE);
+		pixelLine.setStroke(so.getFill());
 		pixelLine.setStrokeWidth(1.0f);
 		root.getChildren().add(pixelLine);
 	}

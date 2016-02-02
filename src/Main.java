@@ -58,7 +58,7 @@ public class Main extends Application{
 				// TODO Auto-generated method stub
 //				double mass = Math.random() *100;
 				if (e.getButton() == MouseButton.SECONDARY) {
-					double mass = 5000;
+					double mass = 10000;
 					SpaceObject so = new SpaceObject(mass, 0, 0);
 					so.setCenterX(e.getX());
 					so.setCenterY(e.getY());
@@ -165,6 +165,17 @@ public class Main extends Application{
 					System.out.println(mouseEndY);
 					root.getChildren().remove(dragLine);
 					createSpeedyObject(mouseStartX, mouseStartY, mouseEndX, mouseEndY);
+				} 
+				else if (e.getButton() == MouseButton.PRIMARY){
+					double mass = 1;
+					SpaceObject so = new SpaceObject(mass, 0, 0);
+					so.setCenterX(e.getX());
+					so.setCenterY(e.getY());
+					so.setRadius(5);
+					so.setFill(getRandomColor());
+					spaceObjects.add(so);
+					root.getChildren().add(so);
+				
 				}
 				
 			}

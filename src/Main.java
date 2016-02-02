@@ -68,6 +68,7 @@ public class Main extends Application{
 					spaceObjects.add(so);
 					root.getChildren().add(so);
 				}
+				updateLabels();
 			}
 			
 		};
@@ -86,15 +87,14 @@ public class Main extends Application{
 					break;
 				case SPACE:
 					Physics.G += 0.1;
-					gravityLabel.setText("Gravity: " + Physics.G);
+					updateLabels();
 					break;
 				case Q:
 					Physics.G -= 0.1;
-					gravityLabel.setText("Gravity: " + Physics.G);
+					updateLabels();
 					break;
 				case C:
-					spaceObjects.clear();
-					root.getChildren().clear();
+					clearObjects();
 					break;
 				default:
 					break;
@@ -104,6 +104,25 @@ public class Main extends Application{
 	
 	public static void main(String[] args) {
 		launch(args);
+	}
+	
+	/**
+	 * clears any "space" objects from the screen
+	 * leaves any labels, etc.
+	 */
+	private void clearObjects() {
+		root.getChildren().clear();
+		spaceObjects.clear();
+		addLabels();
+	}
+	
+	private void addLabels() {
+		root.getChildren().addAll(gravityLabel, particlesNumberLabel);
+	}
+	
+	private void updateLabels() {
+		particlesNumberLabel.setText("Particles: " + spaceObjects.size());
+		gravityLabel.setText("Gravity: " + Physics.G);
 	}
 	
 	public void start(Stage stage) {
@@ -177,9 +196,9 @@ public class Main extends Application{
 					root.getChildren().add(so);
 				
 				}
-				
 			}
 		});
+		updateLabels();
 	  	
 	}
 	
@@ -245,8 +264,6 @@ public class Main extends Application{
 					so.vy = -so.vy;
 				}
 			}
-			
-			particlesNumberLabel.setText("Particles: " + spaceObjects.size());
 			drawTrace(so);
 		}
 	}

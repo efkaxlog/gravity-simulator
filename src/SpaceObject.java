@@ -19,8 +19,8 @@ public class SpaceObject extends Circle {
 			setRadius(getRadius() + collisionObject.getRadius());
 		}		
 		if (canMove) {
-			vx += collisionObject.vx;
-			vy += collisionObject.vy;
+			vx += Physics.getDXForceFromAcceleration(collisionObject) / mass;
+			vy += Physics.getDYForceFromAcceleration(collisionObject) / mass;
 		}
 	}
 	

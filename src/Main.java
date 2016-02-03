@@ -67,6 +67,7 @@ public class Main extends Application{
 					so.setRadius(25);
 					so.canMove = false;
 					so.setFill(Color.YELLOW);
+					so.canAbsorb = false;
 					spaceObjects.add(so);
 					root.getChildren().add(so);
 				}
@@ -163,8 +164,6 @@ public class Main extends Application{
 						mouseStartX = e.getX();
 						mouseStartY = e.getY();
 						dragging = true;
-						System.out.println(mouseStartX);
-						System.out.println(mouseStartY);
 						root.getChildren().add(dragLine);
 						dragLine.setStartX(mouseStartX);
 						dragLine.setStartY(mouseStartY);
@@ -255,16 +254,18 @@ public class Main extends Application{
 					continue;
 				}
 				
-				if (Physics.getDistance(so1, so2) < 1) {
-					if (so1.mass >= so2.mass) {
-						// so1 'absorbs so2'
+				if (Math.abs(so1.getCenterX() - so2.getCenterX()) - so1.getRadius() <= 0 &&
+						Math.abs(so1.getCenterY() - so2.getCenterY()) - so1.getRadius() <= 0) {
+					if (so1.getRadius() >= so2.getRadius()) {
 						so1.collide(so2);
 						removeSpaceObject(so2, so2Iterator);
-					} else {
+					}
+					else {
 						// so2 'abosrbs so2'
 						so2.collide(so1);
 						removeSpaceObject(so1, so2Iterator);
 					}
+					updateLabels();
 				}
 				
 				/*if (so1.getCenterX() == so2.getCenterX() &&

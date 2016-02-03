@@ -43,4 +43,12 @@ public class Physics {
 		double d = getDistance(so1, so2);
 		return G * so1.mass / (d*d) * (so1.getCenterY() - so2.getCenterY()) / d;
 	}
+	
+	public static double getDYForceFromAcceleration(SpaceObject so) {
+		return so.vy / so.mass;
+	}
+	
+	public static double getDXForceFromAcceleration(SpaceObject so) {
+		return so.vx / so.mass;
+	}
 }

@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -32,6 +33,7 @@ public class Main extends Application{
   	Label gravityLabel = new Label();
   	Label particlesNumberLabel = new Label();
   	boolean bordersEnabled = false;
+  	boolean collisionsOn = true;
  
  
   	
@@ -95,6 +97,7 @@ public class Main extends Application{
 					break;
 				case C:
 					clearObjects();
+					updateLabels();
 					break;
 				default:
 					break;
@@ -180,8 +183,6 @@ public class Main extends Application{
 					mouseEndX = e.getX();
 					mouseEndY = e.getY();
 					dragging = false;
-					System.out.println(mouseEndX);
-					System.out.println(mouseEndY);
 					root.getChildren().remove(dragLine);
 					createSpeedyObject(mouseStartX, mouseStartY, mouseEndX, mouseEndY);
 				} 
@@ -239,10 +240,56 @@ public class Main extends Application{
 		root.getChildren().add(pixelLine);
 	}
 	
-	public void update() {
-		double[] newvX = new double[spaceObjects.size()];
-		double[] newvY = new double[spaceObjects.size()];
+	private void removeSpaceObject(SpaceObject so, Iterator<SpaceObject> soIterator) {
+		soIterator.remove();
+		root.getChildren().remove(so);
+	}
+	
+	private void handleCollision() {
+		// got to use Iterators to remove objects while iterating
+		for (Iterator<SpaceObject> so1Iterator = spaceObjects.iterator(); so1Iterator.hasNext();) {
+			SpaceObject so1 = so1Iterator.next();
+			for (Iterator<SpaceObject> so2Iterator = spaceObjects.iterator(); so2Iterator.hasNext();) {
+				SpaceObject so2 = so2Iterator.next();
+				if (so1.equals(so2)) {
+					continue;
+				}
+				
+				if (Physics.getDistance(so1, so2) < 1) {
+					if (so1.mass >= so2.mass) {
+						// so1 'absorbs so2'
+						so1.collide(so2);
+						removeSpaceObject(so2, so2Iterator);
+					} else {
+						// so2 'abosrbs so2'
+						so2.collide(so1);
+						removeSpaceObject(so1, so2Iterator);
+					}
+				}
+				
+				/*if (so1.getCenterX() == so2.getCenterX() &&
+						so1.getCenterY() == so2.getCenterY()) {
+					// absorbing on equal mass too, because one of them has to absorb anyways
+					if (so1.mass >= so2.mass) {
+						// so1 'absorbs so2'
+						so1.collide(so2);
+						removeSpaceObject(so2, so2Iterator);
+					} else {
+						// so2 'abosrbs so2'
+						so2.collide(so1);
+						removeSpaceObject(so1, so2Iterator);
+					}
+				}*/
+			}
+		}
 		
+	}
+	
+	public void update() {
+		// check collisions BEFORE UPDATING VX AND VY
+		if (collisionsOn) {
+			handleCollision();
+		}	
 		for (SpaceObject so : spaceObjects) {
 			for (SpaceObject so2 : spaceObjects) {
 				if (so2 == so || !so.canMove) {
@@ -265,7 +312,8 @@ public class Main extends Application{
 				}
 			}
 			drawTrace(so);
-		}
+		} // end for
+
 	}
 }
 

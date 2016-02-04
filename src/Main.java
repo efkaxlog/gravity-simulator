@@ -32,11 +32,13 @@ public class Main extends Application{
   	Line pixelLine;
   	Label gravityLabel = new Label();
   	Label particlesNumberLabel = new Label();
-  	boolean bordersEnabled = false;
+  	boolean bordersEnabled = true;
   	boolean collisionsOn = true;
- 
- 
   	
+  	double smallBodyRadius = 5;
+  	double starRadius = 50;
+  	
+  	double defaultGravity = 0.03;
   	
 	AnimationTimer atMain = new AnimationTimer() {
 		
@@ -64,7 +66,7 @@ public class Main extends Application{
 					SpaceObject so = new SpaceObject(mass, 0, 0);
 					so.setCenterX(e.getX());
 					so.setCenterY(e.getY());
-					so.setRadius(25);
+					so.setRadius(starRadius);
 					so.canMove = false;
 					so.setFill(Color.YELLOW);
 					so.canAbsorb = false;
@@ -90,24 +92,29 @@ public class Main extends Application{
 					break;
 				case SPACE:
 					Physics.G += 0.1;
-					updateLabels();
 					break;
 				case Q:
 					Physics.G -= 0.1;
-					updateLabels();
 					break;
 				case C:
 					clearObjects();
-					updateLabels();
+					break;
+				case R: 
+					resetToDefaultSettings();
 					break;
 				default:
 					break;
 				}
+				updateLabels();
 			}
 		};
 	
 	public static void main(String[] args) {
 		launch(args);
+	}
+	
+	private void resetToDefaultSettings() {
+		Physics.G = defaultGravity;
 	}
 	
 	/**
@@ -130,6 +137,7 @@ public class Main extends Application{
 	}
 	
 	public void start(Stage stage) {
+		Physics.G = defaultGravity;
 		spaceObjects = new ArrayList<SpaceObject>();
 	  	root = new Pane();
 	    scene = new Scene(root, 800, 800);
@@ -190,7 +198,7 @@ public class Main extends Application{
 					SpaceObject so = new SpaceObject(mass, 0, 0);
 					so.setCenterX(e.getX());
 					so.setCenterY(e.getY());
-					so.setRadius(5);
+					so.setRadius(smallBodyRadius);
 					so.setFill(getRandomColor());
 					spaceObjects.add(so);
 					root.getChildren().add(so);
@@ -209,17 +217,6 @@ public class Main extends Application{
 		return new Color(r, g, b, 1);
 	}
 	
-	private void createSpaceObject(double mouseX, double mouseY) {
-		SpaceObject so = new SpaceObject(10, 0, 0);
-		so.setRadius(5);
-		so.setCenterX(mouseX);
-		so.setCenterY(mouseY);
-		so.setFill(getRandomColor());
-		spaceObjects.add(so);
-		root.getChildren().add(so);
-		
-	}
-	
 	private void createSpeedyObject(double startX, double startY, double endX, double endY) {
 		double vx = (startX - endX) / 50;
 		double vy = (startY - endY) / 50;
@@ -227,7 +224,7 @@ public class Main extends Application{
 		so.setCenterX(endX);
 		so.setCenterY(endY);
 		spaceObjects.add(so);
-		so.setRadius(5);
+		so.setRadius(smallBodyRadius);
 		so.setFill(getRandomColor());
 		root.getChildren().add(so);
 	}
@@ -239,50 +236,42 @@ public class Main extends Application{
 		root.getChildren().add(pixelLine);
 	}
 	
-	private void removeSpaceObject(SpaceObject so, Iterator<SpaceObject> soIterator) {
-		soIterator.remove();
-		root.getChildren().remove(so);
-	}
-	
 	private void handleCollision() {
+		ArrayList<SpaceObject> bodiesToRemove = new ArrayList<SpaceObject>();
 		// got to use Iterators to remove objects while iterating
-		for (Iterator<SpaceObject> so1Iterator = spaceObjects.iterator(); so1Iterator.hasNext();) {
-			SpaceObject so1 = so1Iterator.next();
-			for (Iterator<SpaceObject> so2Iterator = spaceObjects.iterator(); so2Iterator.hasNext();) {
-				SpaceObject so2 = so2Iterator.next();
+		for (SpaceObject so1 : spaceObjects) {
+			for (SpaceObject so2 : spaceObjects) {
 				if (so1.equals(so2)) {
 					continue;
 				}
 				
 				if (Math.abs(so1.getCenterX() - so2.getCenterX()) - so1.getRadius() <= 0 &&
 						Math.abs(so1.getCenterY() - so2.getCenterY()) - so1.getRadius() <= 0) {
-					if (so1.getRadius() >= so2.getRadius()) {
+					if (so1.mass > so2.mass) {
 						so1.collide(so2);
-						removeSpaceObject(so2, so2Iterator);
+						bodiesToRemove.add(so2);
 					}
-					else {
+					else if (so1.mass < so2.mass) {
 						// so2 'abosrbs so2'
 						so2.collide(so1);
-						removeSpaceObject(so1, so2Iterator);
+						bodiesToRemove.add(so1);
+					}
+					// mass is equal;
+					else if (so1.vx + so1.vy <= so2.vx + so2.vy) {
+						so1.collide(so2);
+						bodiesToRemove.add(so2);
+					}
+					else {
+						so2.collide(so1);
+						bodiesToRemove.add(so1);
 					}
 					updateLabels();
 				}
-				
-				/*if (so1.getCenterX() == so2.getCenterX() &&
-						so1.getCenterY() == so2.getCenterY()) {
-					// absorbing on equal mass too, because one of them has to absorb anyways
-					if (so1.mass >= so2.mass) {
-						// so1 'absorbs so2'
-						so1.collide(so2);
-						removeSpaceObject(so2, so2Iterator);
-					} else {
-						// so2 'abosrbs so2'
-						so2.collide(so1);
-						removeSpaceObject(so1, so2Iterator);
-					}
-				}*/
-			}
-		}
+			} // end for so2
+		} // end for so1
+		spaceObjects.removeAll(bodiesToRemove);
+		root.getChildren().removeAll(bodiesToRemove);
+		bodiesToRemove.clear();
 		
 	}
 	
@@ -312,7 +301,7 @@ public class Main extends Application{
 					so.vy = -so.vy;
 				}
 			}
-			drawTrace(so);
+			//drawTrace(so);
 		} // end for
 
 	}

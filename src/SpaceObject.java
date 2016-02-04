@@ -13,14 +13,17 @@ public class SpaceObject extends Circle {
 		canAbsorb = true;
 	}
 	
-	public void collide(SpaceObject collisionObject) {
+	public void collide(SpaceObject co) {
 		if (canAbsorb) {
-			mass += collisionObject.mass;
-			setRadius(getRadius() + collisionObject.getRadius());
+			mass += co.mass;
+			double area = Math.PI * Math.pow(getRadius(), 2);
+			double coArea = Math.PI * Math.pow(co.getRadius(), 2);
+			double mergedArea = area + coArea;
+			setRadius(Math.sqrt(mergedArea / Math.PI));
 		}		
 		if (canMove) {
-			vx += Physics.getDXForceFromAcceleration(collisionObject) / mass;
-			vy += Physics.getDYForceFromAcceleration(collisionObject) / mass;
+			vx += Physics.getDXForceFromAcceleration(co) / co.mass;
+			vy += Physics.getDYForceFromAcceleration(co) / co.mass;
 		}
 	}
 	

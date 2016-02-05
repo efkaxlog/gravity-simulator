@@ -43,7 +43,15 @@ public class Main extends Application{
   	double lastShot = System.currentTimeMillis();
   	double planetShotInterval = 0;
   	
+  	Label stepsPerSecLabel = new Label();
+  	double stepsPerSec = 0;
+  	// for checking how many steps per sec
+  	double stepCounter = 0;
+  	double lastStepMillis = System.currentTimeMillis();
+  	
   	Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+  	
+  	Color labelColor = Color.WHITE;
   	
 	AnimationTimer atMain = new AnimationTimer() {
 		
@@ -56,6 +64,15 @@ public class Main extends Application{
 				createSpeedyObject();
 				lastShot = System.currentTimeMillis();
 			}
+
+			
+			if (System.currentTimeMillis() - lastStepMillis >=  1000) {
+				lastStepMillis = System.currentTimeMillis();
+				stepsPerSec = stepCounter;
+				stepCounter = 0;
+			}
+			
+			stepCounter ++;
 			
 //			try {
 //				Thread.sleep(1000);
@@ -188,12 +205,13 @@ public class Main extends Application{
 	}
 	
 	private void addLabels() {
-		root.getChildren().addAll(gravityLabel, particlesNumberLabel);
+		root.getChildren().addAll(gravityLabel, particlesNumberLabel, stepsPerSecLabel);
 	}
 	
 	private void updateLabels() {
 		particlesNumberLabel.setText("Particles: " + spaceObjects.size());
 		gravityLabel.setText("Gravity: " + Physics.G);
+		stepsPerSecLabel.setText("Steps per second: " + stepsPerSec);
 	}
 	
 	public void start(Stage stage) {
@@ -207,17 +225,23 @@ public class Main extends Application{
 	  	root.setStyle("-fx-background-color: #000000");
 	  	dragLine.setStroke(Color.WHITE);
 	  	
-	  	gravityLabel.setTextFill(Color.WHITE);
+	  	gravityLabel.setText("Gravity: " + Physics.G);
+	  	gravityLabel.setTextFill(labelColor);
 	  	gravityLabel.setLayoutX(5);
 	  	gravityLabel.setLayoutY(5);
-	  	gravityLabel.setText("Gravity: " + Physics.G);
 	  	root.getChildren().add(gravityLabel);  	
 	  	
 	  	particlesNumberLabel = new Label("Particles: " + spaceObjects.size());
-	  	particlesNumberLabel.setTextFill(Color.WHITE);
+	  	particlesNumberLabel.setTextFill(labelColor);
 	  	particlesNumberLabel.setLayoutX(5);
 	  	particlesNumberLabel.setLayoutY(15);
 	  	root.getChildren().add(particlesNumberLabel);
+	  	
+	  	stepsPerSecLabel = new Label("Steps per second: " + stepsPerSec);
+	  	stepsPerSecLabel.setTextFill(labelColor);
+	  	stepsPerSecLabel.setLayoutX(5);
+	  	stepsPerSecLabel.setLayoutY(25);
+	  	root.getChildren().add(stepsPerSecLabel);
 	  	
 	  	stage.setScene(scene);
 	  	stage.show();

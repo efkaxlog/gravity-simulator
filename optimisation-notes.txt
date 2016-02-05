@@ -1,1 +1,4 @@
 Currently, the simulation pulls of around 60 steps per second calculating 800 individual particles. By optimisng I hope to run smooth 60 step per sec simulations with many more particles.
+
+UPDATE:
+Found out that the actual physics math for finding force, velocity, etc etc. always takes at least 98.5% to around 99.9% of processing time. Wow.

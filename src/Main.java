@@ -34,11 +34,11 @@ public class Main extends Application{
   	boolean collisionsOn = true;
   	boolean running = false;
   	boolean isOnPlanetGenerator = false;
-  	double smallBodyRadius = 0.4;
-  	double smallBodyMass = 1;
-  	double starRadius = 25;
-  	double starMass = 10000;
-  	double defaultGravity = 2;
+  	double smallBodyRadius = 0.7;
+  	double smallBodyMass = 30;
+  	double starRadius = 20;
+  	double starMass = 400000;
+  	double defaultGravity = 0.03;
   	double gravityStep = defaultGravity / 10;
   	double lastShot = System.currentTimeMillis();
   	double planetShotInterval = 0;
@@ -52,6 +52,8 @@ public class Main extends Application{
   	Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
   	
   	Color labelColor = Color.WHITE;
+
+  	ArrayList<SpaceObject> bodiesToRemove = new ArrayList<SpaceObject>();
   	
 	AnimationTimer atMain = new AnimationTimer() {
 		
@@ -72,14 +74,7 @@ public class Main extends Application{
 				stepCounter = 0;
 			}
 			
-			stepCounter ++;
-			
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
+			stepCounter++;
 		}};
 		
 		EventHandler<MouseEvent> mouseHandler = new EventHandler<MouseEvent>() {
@@ -93,8 +88,8 @@ public class Main extends Application{
 					so.setCenterX(e.getX());
 					so.setCenterY(e.getY());
 					so.setRadius(starRadius);
-					so.canMove = false;
 					so.setFill(Color.YELLOW);
+					so.canMove = false;
 					so.canAbsorb = false;
 					spaceObjects.add(so);
 					root.getChildren().add(so);
@@ -149,8 +144,12 @@ public class Main extends Application{
 						stage.sizeToScene();
 					}
 					break;
+				case RIGHT:
+					update();
+					break;
 				default:
 					break;
+				
 				}
 				updateLabels();
 			}
@@ -176,11 +175,11 @@ public class Main extends Application{
 	}
 	
 	private void createChaos() {
-		for (int i=0; i < 1000; i ++) {
+		for (int i=0; i < 1000; i++) {
 			SpaceObject body = new SpaceObject(
 					smallBodyMass, 
-					(Math.random() * -5) + (Math.random() * 5),
-					(Math.random() * -5) + (Math.random() * 5));
+					(Math.random() * -15) + (Math.random() * 15),
+					(Math.random() * -15) + (Math.random() * 15));
 			body.setCenterX(Math.random() * scene.getWidth());
 			body.setCenterY(Math.random() * scene.getHeight());
 			body.setFill(getRandomColor());
@@ -335,59 +334,61 @@ public class Main extends Application{
 		root.getChildren().add(pixelLine);
 	}
 	
-	private void handleCollision() {
-		ArrayList<SpaceObject> bodiesToRemove = new ArrayList<SpaceObject>();
-		// got to use Iterators to remove objects while iterating
-		for (SpaceObject so1 : spaceObjects) {
-			for (SpaceObject so2 : spaceObjects) {
-				if (so1.equals(so2)) {
-					continue;
-				}
-				
-				if (Math.abs(so1.getCenterX() - so2.getCenterX()) - so1.getRadius() <= 0 &&
-						Math.abs(so1.getCenterY() - so2.getCenterY()) - so1.getRadius() <= 0) {
-					if (so1.mass > so2.mass) {
-						so1.collide(so2);
-						bodiesToRemove.add(so2);
-					}
-					else if (so1.mass < so2.mass) {
-						so2.collide(so1);
-						bodiesToRemove.add(so1);
-					}
-					// mass is equal;
-					else if (so1.vx + so1.vy <= so2.vx + so2.vy) {
-						so1.collide(so2);
-						bodiesToRemove.add(so2);
-					}
-					else {
-						so2.collide(so1);
-						bodiesToRemove.add(so1);
-					}
-					updateLabels();
-				}
-			} // end for so2
-		} // end for so1
-		spaceObjects.removeAll(bodiesToRemove);
-		root.getChildren().removeAll(bodiesToRemove);
-		bodiesToRemove.clear();
-		
+	private void handleCollision(SpaceObject so1, SpaceObject so2) {
+		// got to use Iterators to remove objects while iterating		
+		if (so1.mass > so2.mass) {
+			so1.collide(so2);
+			bodiesToRemove.add(so2);
+		}
+		else if (so1.mass < so2.mass) {
+			so2.collide(so1);
+			bodiesToRemove.add(so1);
+		}
+		// mass is equal;
+		else if (so1.vx + so1.vy <= so2.vx + so2.vy) {
+			so1.collide(so2);
+			bodiesToRemove.add(so2);
+		}
+		else {
+			so2.collide(so1);
+			bodiesToRemove.add(so1);
+		}
+		updateLabels();
+	}
+	
+	private boolean bodiesCollided(SpaceObject so1, SpaceObject so2) {
+		return (Math.abs(so1.getCenterX() - so2.getCenterX()) - so1.getRadius() <= 0 &&
+				Math.abs(so1.getCenterY() - so2.getCenterY()) - so1.getRadius() <= 0);
 	}
 	
 	public void update() {
+		double startUpdate = System.currentTimeMillis();
+		double startMath = System.currentTimeMillis();
 		// check collisions BEFORE UPDATING VX AND VY
-		if (collisionsOn) {
-			handleCollision();
-		}	
 		for (SpaceObject so : spaceObjects) {
 			for (SpaceObject so2 : spaceObjects) {
-				if (so2 == so || !so.canMove) {
+				if (so2 == so) {
 					continue;
 				}
-				so.vx += Physics.getDX(so2, so);
-				so.vy += Physics.getDY(so2, so);
+				if (bodiesCollided(so, so2)) {
+					handleCollision(so, so2);
+					continue;
+				}
+				if (so.canMove) {
+					so.vx += Physics.getDX(so2, so);
+					so.vy += Physics.getDY(so2, so);
+				}
+				
 			} // end for so2
 		} // end for so
+		double endMath = System.currentTimeMillis();
+		double startArrays = System.currentTimeMillis();
+		spaceObjects.removeAll(bodiesToRemove);
+		root.getChildren().removeAll(bodiesToRemove);
+		bodiesToRemove.clear();
+		double endArrays = System.currentTimeMillis();
 		
+		double startDraw = System.currentTimeMillis();
 		for (SpaceObject so : spaceObjects) {
 			so.setCenterX(so.getCenterX() + so.vx);
 			so.setCenterY(so.getCenterY() + so.vy);
@@ -401,7 +402,15 @@ public class Main extends Application{
 			}
 			//drawTrace(so);
 		} // end for
-
+		double endDraw = System.currentTimeMillis();
+		double endUpdate = System.currentTimeMillis();
+		
+		System.out.println("Particles: " + spaceObjects.size());
+		System.out.println("All: " + (endUpdate - startUpdate) / 1000);
+		System.out.println("Math: " + (endMath - startMath) / 1000);
+		System.out.println("Arrays: " + (endArrays - startArrays) / 1000);
+		System.out.println("Draw: " + (endDraw - startDraw) / 1000);
+		System.out.println("\n------------\n");
 	}
 }
 

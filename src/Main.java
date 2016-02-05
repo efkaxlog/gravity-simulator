@@ -407,9 +407,10 @@ public class Main extends Application{
 		
 		System.out.println("Particles: " + spaceObjects.size());
 		System.out.println("All: " + (endUpdate - startUpdate) / 1000);
-		System.out.println("Math: " + (endMath - startMath) / 1000);
-		System.out.println("Arrays: " + (endArrays - startArrays) / 1000);
-		System.out.println("Draw: " + (endDraw - startDraw) / 1000);
+		System.out.println("*Math: " + (endMath - startMath) / 1000);
+		System.out.println("% of math is: " + (endMath - startMath) /  (endUpdate - startUpdate));
+		System.out.println("-Arrays: " + (endArrays - startArrays) / 1000);
+		System.out.println("#Draw: " + (endDraw - startDraw) / 1000);
 		System.out.println("\n------------\n");
 	}
 }

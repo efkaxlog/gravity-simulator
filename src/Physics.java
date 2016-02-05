@@ -44,11 +44,18 @@ public class Physics {
 		return G * so1.mass / (d*d) * (so1.getCenterY() - so2.getCenterY()) / d;
 	}
 	
-	public static double getDYForceFromAcceleration(SpaceObject so) {
-		return so.vy / so.mass;
+	public static double getForceY(SpaceObject so) {
+		// f = ma
+		return so.mass * so.vy;
 	}
 	
-	public static double getDXForceFromAcceleration(SpaceObject so) {
-		return so.vx / so.mass;
+	public static double getForceX(SpaceObject so) {
+		// f = ma
+		return so.mass * so.vx;
+	}
+	
+	public static double getAccelerationFromForce(double force, double mass) {
+		// a = f/m
+		return force/mass;
 	}
 }

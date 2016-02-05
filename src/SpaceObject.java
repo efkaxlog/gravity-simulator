@@ -22,8 +22,11 @@ public class SpaceObject extends Circle {
 			setRadius(Math.sqrt(mergedArea / Math.PI));
 		}		
 		if (canMove) {
-			vx += Physics.getDXForceFromAcceleration(co) / co.mass;
-			vy += Physics.getDYForceFromAcceleration(co) / co.mass;
+			double totalMass = mass + co.mass;
+			double totalForceX = Physics.getForceX(this) + Physics.getForceX(co);
+			double totalForceY = Physics.getForceY(this) + Physics.getForceY(co);
+			vx = Physics.getAccelerationFromForce(totalForceX, totalMass);
+			vy = Physics.getAccelerationFromForce(totalForceY, totalMass);
 		}
 	}
 	

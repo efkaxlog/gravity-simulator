@@ -1,15 +1,11 @@
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.EventHandler;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
-import javafx.scene.image.PixelWriter;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -17,10 +13,12 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 public class Main extends Application{
 	
+	Stage stage;
 	Scene scene;
 	Pane root;
 	
@@ -34,11 +32,18 @@ public class Main extends Application{
   	Label particlesNumberLabel = new Label();
   	boolean bordersEnabled = true;
   	boolean collisionsOn = true;
+  	boolean running = false;
+  	boolean isOnPlanetGenerator = false;
+  	double smallBodyRadius = 0.4;
+  	double smallBodyMass = 1;
+  	double starRadius = 25;
+  	double starMass = 10000;
+  	double defaultGravity = 2;
+  	double gravityStep = defaultGravity / 10;
+  	double lastShot = System.currentTimeMillis();
+  	double planetShotInterval = 0;
   	
-  	double smallBodyRadius = 5;
-  	double starRadius = 50;
-  	
-  	double defaultGravity = 0.03;
+  	Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
   	
 	AnimationTimer atMain = new AnimationTimer() {
 		
@@ -47,6 +52,11 @@ public class Main extends Application{
 		public void handle(long arg0) {
 			// TODO Auto-generated method stub
 			update();
+			if ((dragging && isOnPlanetGenerator) && canShoot()) {
+				createSpeedyObject();
+				lastShot = System.currentTimeMillis();
+			}
+			
 //			try {
 //				Thread.sleep(1000);
 //			} catch (InterruptedException e) {
@@ -62,8 +72,7 @@ public class Main extends Application{
 				// TODO Auto-generated method stub
 //				double mass = Math.random() *100;
 				if (e.getButton() == MouseButton.SECONDARY) {
-					double mass = 10000;
-					SpaceObject so = new SpaceObject(mass, 0, 0);
+					SpaceObject so = new SpaceObject(starMass, 0, 0);
 					so.setCenterX(e.getX());
 					so.setCenterY(e.getY());
 					so.setRadius(starRadius);
@@ -75,7 +84,6 @@ public class Main extends Application{
 				}
 				updateLabels();
 			}
-			
 		};
 		
 		EventHandler<KeyEvent> keyPressHandler = new EventHandler<KeyEvent>() {
@@ -85,16 +93,20 @@ public class Main extends Application{
 				KeyCode key = e.getCode();
 				if(key != null) switch (key) {
 				case DOWN:
-					atMain.stop();
+					Physics.G -= gravityStep;
 					break;
 				case UP:
-					atMain.start();
+					Physics.G += gravityStep;
 					break;
 				case SPACE:
-					Physics.G += 0.1;
-					break;
-				case Q:
-					Physics.G -= 0.1;
+					if (running) {
+						atMain.stop();
+						running = false;
+					} 
+					else {
+						atMain.start();
+						running = true;
+					}
 					break;
 				case C:
 					clearObjects();
@@ -102,6 +114,39 @@ public class Main extends Application{
 				case R: 
 					resetToDefaultSettings();
 					break;
+				case Z:
+					isOnPlanetGenerator = true;
+					break;
+				case ESCAPE:
+					System.exit(0);
+					break;
+				case Q:
+					createChaos();
+					break;
+				case F:
+					if (stage.isFullScreen()) {
+						stage.setFullScreen(false);
+					}
+					else {
+						stage.setFullScreen(true);
+						stage.sizeToScene();
+					}
+					break;
+				default:
+					break;
+				}
+				updateLabels();
+			}
+		};
+		
+		EventHandler<KeyEvent> keyReleaseHandler = new EventHandler<KeyEvent>() {
+			
+			@Override
+			public void handle(KeyEvent e) {
+				KeyCode key = e.getCode();
+				if(key != null) switch (key) {
+				case Z:
+					isOnPlanetGenerator = false;
 				default:
 					break;
 				}
@@ -111,6 +156,21 @@ public class Main extends Application{
 	
 	public static void main(String[] args) {
 		launch(args);
+	}
+	
+	private void createChaos() {
+		for (int i=0; i < 1000; i ++) {
+			SpaceObject body = new SpaceObject(
+					smallBodyMass, 
+					(Math.random() * -5) + (Math.random() * 5),
+					(Math.random() * -5) + (Math.random() * 5));
+			body.setCenterX(Math.random() * scene.getWidth());
+			body.setCenterY(Math.random() * scene.getHeight());
+			body.setFill(getRandomColor());
+			body.setRadius(smallBodyRadius);
+			spaceObjects.add(body);
+			root.getChildren().add(body);
+		}
 	}
 	
 	private void resetToDefaultSettings() {
@@ -137,10 +197,12 @@ public class Main extends Application{
 	}
 	
 	public void start(Stage stage) {
+		this.stage = stage;
 		Physics.G = defaultGravity;
 		spaceObjects = new ArrayList<SpaceObject>();
 	  	root = new Pane();
-	    scene = new Scene(root, 800, 800);
+	    scene = new Scene(root, 1920, 1080);
+	    
 
 	  	root.setStyle("-fx-background-color: #000000");
 	  	dragLine.setStroke(Color.WHITE);
@@ -178,36 +240,49 @@ public class Main extends Application{
 					}
 					dragLine.setEndX(e.getX());
 					dragLine.setEndY(e.getY());
+					mouseEndX = e.getX();
+					mouseEndY = e.getY();
 				}
 			}
 		});
+	  	
 	  	
 		scene.setOnMouseReleased(new EventHandler<MouseEvent>() {
 
 			@Override
 			public void handle(MouseEvent e) {
 				if (dragging) {
-					mouseEndX = e.getX();
-					mouseEndY = e.getY();
 					dragging = false;
 					root.getChildren().remove(dragLine);
-					createSpeedyObject(mouseStartX, mouseStartY, mouseEndX, mouseEndY);
-				} 
+					createSpeedyObject();
+				}
 				else if (e.getButton() == MouseButton.PRIMARY){
-					double mass = 1;
-					SpaceObject so = new SpaceObject(mass, 0, 0);
-					so.setCenterX(e.getX());
-					so.setCenterY(e.getY());
-					so.setRadius(smallBodyRadius);
-					so.setFill(getRandomColor());
-					spaceObjects.add(so);
-					root.getChildren().add(so);
-				
+					createBody(e.getX(), e.getY(), 0, 0);
 				}
 			}
 		});
 		updateLabels();
+		
+//		scene.setOnMouseMoved(mouseMoveHandler);
+		scene.setOnKeyReleased(keyReleaseHandler);
+		stage.setFullScreen(true);
+		createChaos();
 	  	
+	}
+	
+	private boolean canShoot() {
+		return System.currentTimeMillis() - lastShot >= planetShotInterval;
+	}
+	
+	private void createBody(double x, double y, double vx, double vy) {
+		double mass = smallBodyMass;
+		SpaceObject so = new SpaceObject(mass, 0, 0);
+		so.setCenterX(x);
+		so.setCenterY(y);
+		so.setRadius(smallBodyRadius);
+		so.setFill(getRandomColor());
+		spaceObjects.add(so);
+		root.getChildren().add(so);
 	}
 	
 	private Color getRandomColor() {
@@ -217,12 +292,12 @@ public class Main extends Application{
 		return new Color(r, g, b, 1);
 	}
 	
-	private void createSpeedyObject(double startX, double startY, double endX, double endY) {
-		double vx = (startX - endX) / 50;
-		double vy = (startY - endY) / 50;
-		SpaceObject so = new SpaceObject(10, vx, vy);
-		so.setCenterX(endX);
-		so.setCenterY(endY);
+	private void createSpeedyObject() {
+		double vx = (mouseStartX - mouseEndX) / 50;
+		double vy = (mouseStartY - mouseEndY) / 50;
+		SpaceObject so = new SpaceObject(smallBodyMass, vx, vy);
+		so.setCenterX(mouseEndX);
+		so.setCenterY(mouseEndY);
 		spaceObjects.add(so);
 		so.setRadius(smallBodyRadius);
 		so.setFill(getRandomColor());
@@ -252,7 +327,6 @@ public class Main extends Application{
 						bodiesToRemove.add(so2);
 					}
 					else if (so1.mass < so2.mass) {
-						// so2 'abosrbs so2'
 						so2.collide(so1);
 						bodiesToRemove.add(so1);
 					}

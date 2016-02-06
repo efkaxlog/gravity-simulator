@@ -1,3 +1,4 @@
+package top;
 
 public class Physics {
 
@@ -15,7 +16,7 @@ public class Physics {
 	 * @param SpaceObject2
 	 * @return calculated distance between two Space Objects
 	 */
-	public static double getDistance(SpaceObject so1, SpaceObject so2) {
+	final public static double getDistance(SpaceObject so1, SpaceObject so2) {
 		// square root of: x distance^2 + y distance^2
 		return Math.sqrt(
 				(Math.pow(so1.getCenterX() - so2.getCenterX(), 2)) +  
@@ -28,8 +29,8 @@ public class Physics {
 	 * @param SpaceObject2
 	 * @return acceleration
 	 */
-	public static double getDX(SpaceObject so1, SpaceObject so2) {
-		double d = getDistance(so1, so2);
+	final public static double getDX(SpaceObject so1, SpaceObject so2) {
+		final double d = getDistance(so1, so2);
 		return G * so1.mass / (d*d) * (so1.getCenterX() - so2.getCenterX()) / d;
 	}
 	
@@ -39,8 +40,8 @@ public class Physics {
 	 * @param SpaceObject2
 	 * @return acceleration
 	 */
-	public static double getDY(SpaceObject so1, SpaceObject so2) {
-		double d = getDistance(so1, so2);
+	final public static double getDY(SpaceObject so1, SpaceObject so2) {
+		final double d = getDistance(so1, so2);
 		return G * so1.mass / (d*d) * (so1.getCenterY() - so2.getCenterY()) / d;
 	}
 	

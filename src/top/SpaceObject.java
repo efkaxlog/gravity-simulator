@@ -1,3 +1,4 @@
+package top;
 import javafx.scene.shape.Circle;
 
 public class SpaceObject extends Circle {
